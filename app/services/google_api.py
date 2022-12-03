@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from aiogoogle import Aiogoogle
 
 from app.core.config import settings
@@ -40,11 +42,14 @@ async def spreadsheets_update_value(
     '''Записывает полученную из БД информацию в документ с таблицами'''
     service = await wrapper_services.discover('sheets', 'v4')
     table_values = const.TABLE_HEADER
-    table_values = [
-        *const.TABLE_HEADER,
-        *[list(map(str, project)) for project in projects],
-    ]
-
+    for project in projects:
+        print(project, type(project))
+        new_row = [
+            str(project['name']),
+            str(timedelta(project['_no_label'])),
+            str(project['description'])
+        ]
+        table_values.append(new_row)
     update_body = {
         'majorDimension': 'ROWS',
         'values': table_values
@@ -55,7 +60,6 @@ async def spreadsheets_update_value(
             service.spreadsheets.values.update(
                 spreadsheetId=spreadsheet_id,
                 range='A1:D100',
-                # range='RC[-4]:R[97]C[-1]', # насколько я понял, R1C1-нотация не поддерживается
                 valueInputOption='USER_ENTERED',
                 json=update_body
             )
